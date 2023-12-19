@@ -3,6 +3,7 @@ using UserRegistry.Components;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.AspNetCore.SignalR;
 using UserRegistry.Hubs;
+using UserRegistry.Client.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,13 +12,8 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
-builder.Services.AddResponseCompression(opts =>
-{
-    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-    new[] { "application/octet-stream" }
-    );
-}
-);
+builder.Services.AddTransient<DataGenerator>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

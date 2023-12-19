@@ -1,8 +1,11 @@
 ﻿@page "/generator"
 @rendermode InteractiveAuto
+@inject DataGenerator data
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using System.Diagnostics
 @using UserRegistry.Client.Models
+
+
 
 <p>
     <label> Amount To Add</label>
@@ -83,7 +86,7 @@
 </form>
 
 <div class="container d-flex justify-content-between">
-    <table class="table">
+    <table class="table table-striped">
         <thead>
             <tr>
                 <th>#</th>
@@ -95,23 +98,25 @@
         </thead>
         <tbody>
 
-            <Virtualize Items="@stringList" SpacerElement="tr">
-                @if (stringList is not null)
-                {
-                    <tr>
-                        <td>@context.Id</td>
-                        <td>@context.Guid</td>
-                        <td>@context.Name</td>
-                        <td>@context.Address</td>
-                        <td>@context.PhoneNumber</td>
-                    </tr>
-                }
-            </Virtualize>
 
+            @foreach(var p in people)
+            {
+                <tr>
+                    <td>1</td>
+                    <td>@p.Id</td>
+                    <td>@p.FirstName</td>
+                    <td>@p.StreetAddress</td>
+                    <td>@p.Phone</td>
+                </tr>
+            }
         </tbody>
     </table>
 </div>
 
+
+<button type="button" class="btn btn-outline-primary" @onclick="LoadData">
+    Load More Data
+</button>
 
 
 @code {
@@ -189,4 +194,17 @@
     new(24, "1466997d-3102-49e6-b9bd-f4379b56f157", "Tim Brook", "13, Brookfield", "5458258"),
     new(25, "39d6df9a-d65b-4d85-adbd-6f87ac99e6e5", "Wes Montgomery", "12, Brookfield", "+89568453615")
     };
+
+
+
+
+    List<PersonModel> people = new();
+
+    private void LoadData()
+    {
+        var results = data.GeneratePeople().Take(10);
+        people.AddRange(results);
+    }
+
+
 }
