@@ -12,7 +12,7 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
-builder.Services.AddTransient<DataGenerator>();
+//builder.Services.AddTransient<DataGenerator>();
 
 var app = builder.Build();
 

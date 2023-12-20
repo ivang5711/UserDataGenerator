@@ -3,9 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.8.34330.188
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserRegistry", "UserRegistry\UserRegistry\UserRegistry.csproj", "{4E2867E9-54AE-476B-BCFD-71A07E9C2ACF}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserRegistry", "UserRegistry\UserRegistry\UserRegistry.csproj", "{4E2867E9-54AE-476B-BCFD-71A07E9C2ACF}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UserRegistry.Client", "UserRegistry\UserRegistry.Client\UserRegistry.Client.csproj", "{E16FC1E2-1558-49E8-9E8D-917B3AE2F95B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UserRegistry.Client", "UserRegistry\UserRegistry.Client\UserRegistry.Client.csproj", "{E16FC1E2-1558-49E8-9E8D-917B3AE2F95B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

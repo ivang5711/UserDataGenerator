@@ -1,78 +1,75 @@
 ﻿@page "/generator"
 @rendermode InteractiveAuto
-@inject DataGenerator data
 @using Microsoft.AspNetCore.Components.Web.Virtualization
 @using System.Diagnostics
 @using UserRegistry.Client.Models
-
-
-
-<p>
-    <label> Amount To Add</label>
-    <input @bind="AmountToAdd" @bind:event="oninput" @onchange="CalculateSum" />
-    <label> Id To Add</label>
-    <input @bind="IdToAdd" @bind:event="oninput" @onchange="CalculateSum" />
-    <label> Name To Add</label>
-    <input @bind="NameToAdd" @bind:event="oninput" @onchange="CalculateSum" />
-</p>
-
-<button class="btn btn-primary" @onclick="ClearStorage">click me</button>
-
-<p>
-    <code>InputValue</code>: @AmountToAdd
-</p>
-
-<p>
-    <code>OutputValue</code>: @TotalValue
-</p>
-
-<div>
-    @foreach (var item in temp)
-    {
-        <p>@item</p>
-    }
-</div>
-
-<br />
-
+@inject NavigationManager _navigationManager
 
 <PageTitle>User Registry</PageTitle>
 
 <form class="row form-inline d-flex pb-3">
     <div class="col">
         <div class="row">
-            <label class="col-sm-2 col-form-label" for="autoSizingSelect">Region:</label>
+            <label class="col-sm-2 col-form-label"
+                   for="autoSizingSelect">Region:</label>
             <div class="col-sm-10">
-                <select @bind="MyProperty" class="form-select" id="autoSizingSelect">
-                    <option selected value="1">USA</option>
-                    <option value="2">Georgia</option>
-                    <option value="3">Germany</option>
+                <select @bind="@locale" @bind:event="oninput"
+                        @onchange="ClearPeopleStorage" class="form-select"
+                        id="autoSizingSelect">
+                    <option selected value="en">USA</option>
+                    <option value="ge">Georgia</option>
+                    <option value="ko">Korea</option>
+                    <option value="de">Germany</option>
+                    <option value="cz">Czech</option>
+                    <option value="zh_CN">China</option>
+                    <option value="el">Greek</option>
+                    <option value="sk">Slovakia</option>
+                    <option value="ru">Russia</option>
+                    <option value="ja">Japan</option>
                 </select>
             </div>
         </div>
     </div>
     <div class="col-auto d-flex align-self-center">
         <div class="row d-flex align-self-center">
-            <label class="col-sm-2 col-form-label d-flex align-self-center" for="autoSizingSelect1">Errors:</label>
+            <label class="col-sm-2 col-form-label d-flex align-self-center"
+                   for="autoSizingSelect1">Errors:</label>
             <span class="col d-flex align-self-center">
-                <input type="range" class="form-range" id="customRange1">
+                <input type="range" class="form-range" id="customRange1"
+                       min="0" max="10" step="0.25" @bind="errorValue"
+                       @bind:event="oninput" @onchange="ClearPeopleStorage">
             </span>
             <span class="col d-flex align-self-center">
-                <input type="text" class="form-control" placeholder="Error count" aria-label="Error count">
+                <input type="number" class="form-control" @bind="@errorValue"
+                       @bind:event="oninput" @onchange="ClearPeopleStorage"
+                       min="0" max="1000" step="0.25" placeholder="Error count"
+                       aria-label="Error count">
             </span>
         </div>
     </div>
     <div class="col-auto d-flex align-self-center justify-content-end">
         <div class="row d-flex align-self-center">
-            <label class="col-sm-2 col-form-label" for="autoSizingSelect1">Seed:</label>
+            <label class="col-sm-2 col-form-label" for="autoSizingSelect1">
+                Seed:
+            </label>
             <span class="col d-flex align-self-center">
-                <input type="text" class="form-control" placeholder="Seed" aria-label="Seed">
+                <input type="number" min="0" max="1999999999" class="form-control"
+                    placeholder="Seed" aria-label="Seed"
+                       @bind="UserSeed" @bind:event="oninput"
+                       @onchange="ClearPeopleStorage">
             </span>
             <span class="col d-flex align-self-center">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-shuffle" viewBox="0 0 16 16">
-                    <path fill-rule="evenodd" d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.624 9.624 0 0 0 7.556 8a9.624 9.624 0 0 0 1.317 1.918C9.828 10.99 11.204 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.595 10.595 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.624 9.624 0 0 0 6.444 8a9.624 9.624 0 0 0-1.317-1.918C4.172 5.01 2.796 4 1 4H.5a.5.5 0 0 1-.5-.5" />
-                    <path d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192zm0 9v-3.932a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192z" />
-                </svg>
+                <button type="button" value="@UserSeed"
+                    class="btn btn-outline-secondary"
+                    @onclick="GenerateRandomSeed"
+                    @onchange="ClearPeopleStorage">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16"
+                    height="16" fill="currentColor" class="bi bi-shuffle"
+                    viewBox="0 0 16 16">
+                        <path fill-rule="evenodd" d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.624 9.624 0 0 0 7.556 8a9.624 9.624 0 0 0 1.317 1.918C9.828 10.99 11.204 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.595 10.595 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.624 9.624 0 0 0 6.444 8a9.624 9.624 0 0 0-1.317-1.918C4.172 5.01 2.796 4 1 4H.5a.5.5 0 0 1-.5-.5" />
+                        <path d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192zm0 9v-3.932a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192z" />
+                    </svg>
+                </button>
             </span>
         </div>
     </div>
@@ -97,114 +94,96 @@
             </tr>
         </thead>
         <tbody>
+            <Virtualize Context="p" ItemsProvider="@LoadUserData"
+                SpacerElement="tr" OverscanCount="4">
+                <ItemContent>
+                    <tr>
+                        <td>@p.Number</td>
+                        <td>@p.Id</td>
+                        <td>@p.Name</td>
+                        <td>@p.StreetAddress</td>
+                        <td>@p.Phone</td>
+                    </tr>
+                </ItemContent>
+                <Placeholder>
+                    <p>
+                        Loading...;
+                    </p>
+                </Placeholder>
+            </Virtualize>
 
-
-            @foreach(var p in people)
-            {
-                <tr>
-                    <td>1</td>
-                    <td>@p.Id</td>
-                    <td>@p.FirstName</td>
-                    <td>@p.StreetAddress</td>
-                    <td>@p.Phone</td>
-                </tr>
-            }
         </tbody>
     </table>
 </div>
 
 
-<button type="button" class="btn btn-outline-primary" @onclick="LoadData">
-    Load More Data
-</button>
-
-
 @code {
-    private string? AmountToAdd { get; set; }
-    private string? IdToAdd { get; set; }
-    private string? NameToAdd { get; set; }
-    private decimal? TotalValue { get; set; }
-    private List<string> temp = [];
-
-    private void CalculateSum()
-    {
-        if (AmountToAdd is not null && IdToAdd is not null && NameToAdd is not null)
-        {
-            TotalValue = Convert.ToDecimal(AmountToAdd) + Convert.ToDecimal(IdToAdd) + Convert.ToDecimal(NameToAdd);
-            if (TotalValue is not null)
-            {
-                ClearStorage();
-                temp.Add(TotalValue.ToString()!);
-            }
-        }
-    }
-
-    private void ClearStorage()
-    {
-        temp.Clear();
-    }
-
-
-
-
-    private List<User>? stringList;
-
-    private string myVar;
-
-    public string MyProperty
-    {
-        get { return myVar; }
-        set
-        {
-            myVar = value;
-            SomeMethod();
-        }
-    }
-
-    private void SomeMethod()
-    {
-        Console.WriteLine($"I am here, my property = {MyProperty}");
-    }
-
-    protected override void OnInitialized() => stringList ??= new()
-    {
-    new(1, "30371740-bddb-41d9-ba07-39a1a3024f30", "John Smith", "25, Brookfield", "+1-524-84-565"),
-    new(2, "b941ca50-4ce3-4b56-bb43-b83ae95c123f", "Mark Twen", "Brookfield 45", "+16-524-84-565"),
-    new(3, "bcccdd66-38de-449d-9fb9-b5e31dae8145", "Lolly Pop", "31, Brookfield", "+1hy-524-844-565"),
-    new(4, "074c69d7-8e06-4b67-87d5-7dd65fedc5b7", "Ashton Kutcher", "25, Brookfield", "+1-524-84-565"),
-    new(5, "c01f571d-3d16-4600-a787-389065a6ed14", "Lizzy James", "19, Brookfield", "+1-524-864-565"),
-    new(6, "a5914ed3-205d-4f2e-baca-85c92e5a2000", "Bobby Lee", "25, Brookfield", "+1-524-j4-6"),
-    new(7, "ef3e1f7a-ca1a-47c7-9435-93b2194266bd", "Rosaline F. Jones", "20, Brookfield", "+1-87-84-76"),
-    new(8, "037a26c2-cd5c-47a7-aaa2-13e62102cf7f", "Babba Xy", "658, Brookfield", "+1-524-84-565"),
-    new(9, "f75f0807-8fb5-4112-a32a-ed02890756d1", "Loren Carlson", "25, Brookfield", "+1-2-84-567"),
-    new(10, "633ca1eb-7516-4806-922d-55720da5acad", "Fred Doe", "8, Brookfield", "+1-524-4-565"),
-    new(11, "848d619a-b11b-42aa-a1eb-a024687a1854", "Jonathan", "2, Brookfield", "+1-524-ffw-565"),
-    new(12, "6aa89f40-8f9f-4360-aff7-300c3e9601cf", "Markus Popper", "25, Brookfield", "+1-524-84-565"),
-    new(13, "71934f77-2297-4530-aa70-d3e486bf708e", "Frederikson Anna", "4, Brookfield", "+1-f-84-565"),
-    new(14, "87238b20-c782-41fd-9d65-e31fa85533e3", "Robert \"bobby\" James", "25, Brookfield", "+fsd - 54"),
-    new(15, "657d38b9-a6a0-48f3-9ba6-c5c3eda5cb1a", "Samantha Williams", "6, Brookfield", "+7-555-84-35-58"),
-    new(16, "d0fe8bbf-9e2f-4958-b3cc-791beee2fc50", "Blake Chad", "25, Brookfield", "+9-524-84-25"),
-    new(17, "bc73e393-ad85-47b4-abde-dd904fc77ba3", "Pimpi Mizers", "8, Brookfield", "+1-777-84-684"),
-    new(18, "a5969c80-c617-42da-9557-488d76355c15", "Lorain Mitchel", "15, Brookfield", "845687 55"),
-    new(19, "830be14e-8c51-46fb-bbe9-8da9c97f167a", "Garry James", "64, Brookfield", "t. 4545 66 88"),
-    new(20, "9a865293-94a9-403e-9248-80dad7b9fb4e", "Wiliam II", "10, Brookfield", "456 66 84"),
-    new(21, "9e0a5a7b-28a0-4b44-89d2-b1db93e1532d", "Joana", "84, Brookfield", "+1-52-546-45"),
-    new(22, "b20c69a2-57f5-4142-a4ea-9f841166a6ce", "Oleg Kuznetsov", "25, Brookfield", "+855 545 99 11"),
-    new(23, "be989d9f-4602-43a9-a4f6-7efbf0560dba", "Ver Dan", "11, Brookfield", "(5484)55448365"),
-    new(24, "1466997d-3102-49e6-b9bd-f4379b56f157", "Tim Brook", "13, Brookfield", "5458258"),
-    new(25, "39d6df9a-d65b-4d85-adbd-6f87ac99e6e5", "Wes Montgomery", "12, Brookfield", "+89568453615")
-    };
-
-
-
-
+    private string locale = "en";
+    private decimal errorValue = 0;
+    private int localeValue = 0;
+    private int seed = 0;
+    private int counter = 1;
+    private DataGenerator data = new("en");
     List<PersonModel> people = new();
+    private string? UserSeed { get; set; } = "0";
 
-    private void LoadData()
+    private async ValueTask<ItemsProviderResult<PersonModel>> LoadUserData(
+        ItemsProviderRequest request)
     {
-        var results = data.GeneratePeople().Take(10);
-        people.AddRange(results);
+        GetDat();
+        var t = people.Skip(request.StartIndex).Take(people.Count);
+        return new ItemsProviderResult<PersonModel>(t, people.Count + 20);
     }
 
+    private IEnumerable<PersonModel> ReturnUsers(int amount)
+    {
+        for (int i = 0; i < amount; i++)
+        {
+            var user = data.GeneratePerson(seed++);
+            user.Number = counter++;
+            people.Add(user);
+        }
 
+        return people;
+    }
+
+    private IEnumerable<PersonModel> GetDat()
+    {
+        return ReturnUsers(20);
+    }
+
+    private void ClearPeopleStorage()
+    {
+        people.Clear();
+        seed = int.Parse(UserSeed is not null ? UserSeed : "0");
+        SetLocaleValue();
+        seed += (int)Math.Floor((decimal)errorValue * 100) + localeValue;
+        data = new(locale);
+        counter = 1;
+        ReturnUsers(20);
+        StateHasChanged();
+    }
+
+    private void GenerateRandomSeed()
+    {
+
+        Random t = new();
+        UserSeed = t.Next(1999999999).ToString();
+        ClearPeopleStorage();
+    }
+
+    private void SetLocaleValue()
+    {
+        localeValue = 0;
+        char[] f = locale.ToCharArray();
+        foreach (var item in f)
+        {
+            localeValue += Convert.ToInt32(item);
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ClearPeopleStorage();
+    }
 }
