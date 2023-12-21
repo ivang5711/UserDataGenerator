@@ -39,5 +39,4 @@ public class DataGenerator(string locale)
     {
         return personModelFake.GenerateForever();
     }
-
 }

@@ -6,7 +6,7 @@
 @inject NavigationManager _navigationManager
 
 <PageTitle>User Registry</PageTitle>
-
+<div class="container">
 <form class="row form-inline d-flex pb-3 justify-content-between">
     <div class="col-md-auto">
         <div class="row">
@@ -32,14 +32,15 @@
                    for="autoSizingSelect1">Errors:</label>
             <span class="col d-flex align-self-center">
                 <input type="range" class="form-range" id="customRange1"
-                       min="0" max="10" step="0.25" @bind="errorValue"
-                       @bind:event="oninput" @onchange="ClearPeopleStorage">
+                       min="@errorMinValue" max="10" step="@errorValueStep"
+                       @bind="errorValue" @bind:event="oninput"
+                       @onchange="ClearPeopleStorage">
             </span>
             <span class="col d-flex align-self-center">
                 <input type="number" class="form-control" @bind="@errorValue"
                        @bind:event="oninput" @onchange="ClearPeopleStorage"
-                       min="0" max="1000" step="0.25" placeholder="Error count"
-                       aria-label="Error count">
+                       min="@errorMinValue" max="1000" step="@errorValueStep"
+                       placeholder="Error count" aria-label="Error count">
             </span>
         </div>
     </div>
@@ -49,8 +50,8 @@
                 Seed:
             </label>
             <span class="col-md-auto d-flex align-self-center">
-                <input type="number" min="0" max="1999999999" class="form-control"
-                       placeholder="Seed" aria-label="Seed"
+                <input type="number" min="0" max="@seedMaxRandomValue"
+                    class="form-control" placeholder="Seed" aria-label="Seed"
                        @bind="UserSeed" @bind:event="oninput"
                        @onchange="ClearPeopleStorage">
             </span>
@@ -77,6 +78,7 @@
         </div>
     </div>
 </form>
+</div>
 
 <div class="container d-flex justify-content-between">
     <table class="table table-striped">
@@ -107,114 +109,7 @@
                     </p>
                 </Placeholder>
             </Virtualize>
-
         </tbody>
     </table>
 </div>
 
-
-@code {
-    private const int startCounter = 1;
-    private const int usersDataChunkSize = 20;
-    private string locale = "en";
-    private decimal errorValue = 0;
-    private int localeValue = 0;
-    private int seed = 0;
-    private int counter = 1;
-    private string _userSeed = "0";
-    private DataGenerator data = new("en");
-    List<PersonModel> people = new();
-
-    private string? UserSeed { 
-        get => _userSeed;
-        set
-        {
-            if (value is not null && int.TryParse(value.Trim(), out _))
-            {
-                _userSeed = value.Trim();
-            }
-            else
-            {
-                _userSeed = "0";
-            }
-        } 
-    }
-
-    private async ValueTask<ItemsProviderResult<PersonModel>> LoadUserData(
-        ItemsProviderRequest request)
-    {
-        await GetUsersData();
-        var t = people.Skip(request.StartIndex).Take(people.Count);
-        return new ItemsProviderResult<PersonModel>(t, people.Count + usersDataChunkSize);
-    }
-
-    private IEnumerable<PersonModel> ReturnUsers(int amount)
-    {
-        for (int i = 0; i < amount; i++)
-        {
-            var user = data.GeneratePerson(seed++);
-            user.Number = counter++;
-            people.Add(user);
-        }
-
-        return people;
-    }
-
-    private async Task<IEnumerable<PersonModel>> GetUsersData()
-    {
-        var task = Task.Run(() => ReturnUsers(usersDataChunkSize));
-        var myOutput = await task;
-        return myOutput;
-    }
-
-    private async Task ClearPeopleStorage()
-    {
-        people.Clear();
-        seed = int.Parse(UserSeed is not null ? UserSeed : "0");
-        SetLocaleValue();
-        seed += (int)Math.Floor((decimal)errorValue * 100) + localeValue;
-        data = new(locale);
-        counter = startCounter;
-        var task = await Task.Run(() => ReturnUsers(usersDataChunkSize));
-        StateHasChanged();
-    }
-
-    private async Task GenerateRandomSeed()
-    {
-
-        Random t = new();
-        UserSeed = t.Next(1999999999).ToString();
-        await ClearPeopleStorage();
-    }
-
-    private void SetLocaleValue()
-    {
-        localeValue = 0;
-        char[] f = locale.ToCharArray();
-        foreach (var item in f)
-        {
-            localeValue += Convert.ToInt32(item);
-        }
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await ClearPeopleStorage();
-    }
-
-
-
-    Dictionary<string, string> locales = new()
-    {
-        {"USA", "en" },
-        { "Georgia", "ge" },
-        { "Germany", "de" },
-        { "Korea", "ko" },
-        { "China", "zh_CN" },
-        { "Czech", "cz" },
-        { "Slovakia", "sk" },
-        { "Russia", "ru" },
-        { "Greece", "el" },
-        { "Japan", "ja" },
-    };
-}
