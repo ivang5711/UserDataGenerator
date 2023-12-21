@@ -1,9 +1,7 @@
+using Microsoft.AspNetCore.ResponseCompression;
 using UserRegistry.Client.Pages;
 using UserRegistry.Components;
-using Microsoft.AspNetCore.ResponseCompression;
-using Microsoft.AspNetCore.SignalR;
 using UserRegistry.Hubs;
-using UserRegistry.Client.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,8 +17,6 @@ builder.Services.AddResponseCompression(opts =>
     );
 }
 );
-
-//builder.Services.AddTransient<DataGenerator>();
 
 var app = builder.Build();
 
