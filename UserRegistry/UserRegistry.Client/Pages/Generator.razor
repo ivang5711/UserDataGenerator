@@ -7,30 +7,26 @@
 
 <PageTitle>User Registry</PageTitle>
 
-<form class="row form-inline d-flex pb-3">
-    <div class="col">
+<form class="row form-inline d-flex pb-3 justify-content-between">
+    <div class="col-md-auto">
         <div class="row">
-            <label class="col-sm-2 col-form-label"
+            <label class="col-md-auto col-form-label"
                    for="autoSizingSelect">Region:</label>
-            <div class="col-sm-10">
+            <div class="col-md-auto">
                 <select @bind="@locale" @bind:event="oninput"
                         @onchange="ClearPeopleStorage" class="form-select"
                         id="autoSizingSelect">
-                    <option selected value="en">USA</option>
-                    <option value="ge">Georgia</option>
-                    <option value="ko">Korea</option>
-                    <option value="de">Germany</option>
-                    <option value="cz">Czech</option>
-                    <option value="zh_CN">China</option>
-                    <option value="el">Greek</option>
-                    <option value="sk">Slovakia</option>
-                    <option value="ru">Russia</option>
-                    <option value="ja">Japan</option>
+                    @foreach (var country in Enum.GetValues(typeof(Countries)))
+                    {
+                        <option value="@locales[country.ToString()!]">
+                            @country
+                        </option>
+                    }
                 </select>
             </div>
         </div>
     </div>
-    <div class="col-auto d-flex align-self-center">
+    <div class="col-md-auto d-flex align-self-center">
         <div class="row d-flex align-self-center">
             <label class="col-sm-2 col-form-label d-flex align-self-center"
                    for="autoSizingSelect1">Errors:</label>
@@ -47,25 +43,25 @@
             </span>
         </div>
     </div>
-    <div class="col-auto d-flex align-self-center justify-content-end">
-        <div class="row d-flex align-self-center">
+    <div class="col-md-auto d-flex align-self-center justify-content-end">
+        <div class="row d-flex align-self-center ">
             <label class="col-sm-2 col-form-label" for="autoSizingSelect1">
                 Seed:
             </label>
-            <span class="col d-flex align-self-center">
+            <span class="col-md-auto d-flex align-self-center">
                 <input type="number" min="0" max="1999999999" class="form-control"
-                    placeholder="Seed" aria-label="Seed"
+                       placeholder="Seed" aria-label="Seed"
                        @bind="UserSeed" @bind:event="oninput"
                        @onchange="ClearPeopleStorage">
             </span>
             <span class="col d-flex align-self-center">
                 <button type="button" value="@UserSeed"
-                    class="btn btn-outline-secondary"
-                    @onclick="GenerateRandomSeed"
-                    @onchange="ClearPeopleStorage">
+                        class="btn btn-outline-secondary"
+                        @onclick="GenerateRandomSeed"
+                        @onchange="ClearPeopleStorage">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16"
-                    height="16" fill="currentColor" class="bi bi-shuffle"
-                    viewBox="0 0 16 16">
+                         height="16" fill="currentColor" class="bi bi-shuffle"
+                         viewBox="0 0 16 16">
                         <path fill-rule="evenodd" d="M0 3.5A.5.5 0 0 1 .5 3H1c2.202 0 3.827 1.24 4.874 2.418.49.552.865 1.102 1.126 1.532.26-.43.636-.98 1.126-1.532C9.173 4.24 10.798 3 13 3v1c-1.798 0-3.173 1.01-4.126 2.082A9.624 9.624 0 0 0 7.556 8a9.624 9.624 0 0 0 1.317 1.918C9.828 10.99 11.204 12 13 12v1c-2.202 0-3.827-1.24-4.874-2.418A10.595 10.595 0 0 1 7 9.05c-.26.43-.636.98-1.126 1.532C4.827 11.76 3.202 13 1 13H.5a.5.5 0 0 1 0-1H1c1.798 0 3.173-1.01 4.126-2.082A9.624 9.624 0 0 0 6.444 8a9.624 9.624 0 0 0-1.317-1.918C4.172 5.01 2.796 4 1 4H.5a.5.5 0 0 1-.5-.5" />
                         <path d="M13 5.466V1.534a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192zm0 9v-3.932a.25.25 0 0 1 .41-.192l2.36 1.966c.12.1.12.284 0 .384l-2.36 1.966a.25.25 0 0 1-.41-.192z" />
                     </svg>
@@ -73,7 +69,7 @@
             </span>
         </div>
     </div>
-    <div class="col-auto d-flex align-self-center justify-content-between">
+    <div class="col-md-auto d-flex align-self-end justify-content-between">
         <div class="row d-flex align-self-center">
             <span class="col d-flex align-self-center">
                 <button type="button" class="btn btn-secondary">Export</button>
@@ -95,7 +91,7 @@
         </thead>
         <tbody>
             <Virtualize Context="p" ItemsProvider="@LoadUserData"
-                SpacerElement="tr" OverscanCount="4">
+                        SpacerElement="tr" OverscanCount="4">
                 <ItemContent>
                     <tr>
                         <td>@p.Number</td>
@@ -118,21 +114,38 @@
 
 
 @code {
+    private const int startCounter = 1;
+    private const int usersDataChunkSize = 20;
     private string locale = "en";
     private decimal errorValue = 0;
     private int localeValue = 0;
     private int seed = 0;
     private int counter = 1;
+    private string _userSeed = "0";
     private DataGenerator data = new("en");
     List<PersonModel> people = new();
-    private string? UserSeed { get; set; } = "0";
+
+    private string? UserSeed { 
+        get => _userSeed;
+        set
+        {
+            if (value is not null && int.TryParse(value.Trim(), out _))
+            {
+                _userSeed = value.Trim();
+            }
+            else
+            {
+                _userSeed = "0";
+            }
+        } 
+    }
 
     private async ValueTask<ItemsProviderResult<PersonModel>> LoadUserData(
         ItemsProviderRequest request)
     {
-        GetDat();
+        await GetUsersData();
         var t = people.Skip(request.StartIndex).Take(people.Count);
-        return new ItemsProviderResult<PersonModel>(t, people.Count + 20);
+        return new ItemsProviderResult<PersonModel>(t, people.Count + usersDataChunkSize);
     }
 
     private IEnumerable<PersonModel> ReturnUsers(int amount)
@@ -147,29 +160,31 @@
         return people;
     }
 
-    private IEnumerable<PersonModel> GetDat()
+    private async Task<IEnumerable<PersonModel>> GetUsersData()
     {
-        return ReturnUsers(20);
+        var task = Task.Run(() => ReturnUsers(usersDataChunkSize));
+        var myOutput = await task;
+        return myOutput;
     }
 
-    private void ClearPeopleStorage()
+    private async Task ClearPeopleStorage()
     {
         people.Clear();
         seed = int.Parse(UserSeed is not null ? UserSeed : "0");
         SetLocaleValue();
         seed += (int)Math.Floor((decimal)errorValue * 100) + localeValue;
         data = new(locale);
-        counter = 1;
-        ReturnUsers(20);
+        counter = startCounter;
+        var task = await Task.Run(() => ReturnUsers(usersDataChunkSize));
         StateHasChanged();
     }
 
-    private void GenerateRandomSeed()
+    private async Task GenerateRandomSeed()
     {
 
         Random t = new();
         UserSeed = t.Next(1999999999).ToString();
-        ClearPeopleStorage();
+        await ClearPeopleStorage();
     }
 
     private void SetLocaleValue()
@@ -184,6 +199,22 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ClearPeopleStorage();
+        await ClearPeopleStorage();
     }
+
+
+
+    Dictionary<string, string> locales = new()
+    {
+        {"USA", "en" },
+        { "Georgia", "ge" },
+        { "Germany", "de" },
+        { "Korea", "ko" },
+        { "China", "zh_CN" },
+        { "Czech", "cz" },
+        { "Slovakia", "sk" },
+        { "Russia", "ru" },
+        { "Greece", "el" },
+        { "Japan", "ja" },
+    };
 }

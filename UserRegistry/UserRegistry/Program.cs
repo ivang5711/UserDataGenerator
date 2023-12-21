@@ -12,6 +12,14 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
 
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+    new[] { "application/octet-stream" }
+    );
+}
+);
+
 //builder.Services.AddTransient<DataGenerator>();
 
 var app = builder.Build();
