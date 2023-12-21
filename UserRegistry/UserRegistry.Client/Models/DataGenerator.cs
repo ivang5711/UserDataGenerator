@@ -28,14 +28,4 @@ public class DataGenerator(string locale)
     {
         return personModelFake.UseSeed(seed).Generate();
     }
-
-    public IEnumerable<PersonModel> GeneratePeople(int seed)
-    {
-        return personModelFake.UseSeed(seed).GenerateForever();
-    }
-
-    public IEnumerable<PersonModel> GeneratePeople()
-    {
-        return personModelFake.GenerateForever();
-    }
 }
