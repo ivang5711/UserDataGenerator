@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Components.Web.Virtualization;
 using UserRegistry.Client.Models;
 
 namespace UserRegistry.Client.Pages;
@@ -6,7 +5,8 @@ namespace UserRegistry.Client.Pages;
 public partial class Generator
 {
     private const int startCounter = 1;
-    private const int usersDataChunkSize = 20;
+    private const int usersDataChunkSize = 5;
+    private const int usersDataChunkStartSize = 20;
     private const string errorValueStep = "0.25";
     private const string errorMinValue = "0";
     private const string seedMaxRandomValue = "1999999999";
@@ -20,18 +20,20 @@ public partial class Generator
     private string _userSeed = userSeedDefaultValue;
     private DataGenerator data = new(localeDefaultValue);
     private List<PersonModel> people = [];
+    private bool doubleRender = false;
 
     private static readonly Dictionary<string, string> locales = new()
-{
-    {"USA", "en" },
-    { "Germany", "de" },
-    { "Canada", "en_CA" },
-    { "France", "fr" }
-};
+    {
+        {"USA", "en" },
+        { "Germany", "de" },
+        { "Canada", "en_CA" },
+        { "France", "fr" }
+    };
 
     protected override async Task OnInitializedAsync()
     {
-        await IitializeGenerator();
+        await Task.Yield();
+        InitializeGenerator();
     }
 
     private string? UserSeed
@@ -42,20 +44,26 @@ public partial class Generator
             value.Trim() : userSeedDefaultValue;
     }
 
-    private async ValueTask<ItemsProviderResult<PersonModel>> LoadUserData(
-        ItemsProviderRequest request)
+    private void GenerateChunkOfUsers()
     {
-        await GetUsersData();
-        IEnumerable<PersonModel> t = people.Skip(request.StartIndex)
-        .Take(people.Count);
-        return new ItemsProviderResult<PersonModel>(
-            t, people.Count + usersDataChunkSize);
-    }
-
-    private List<PersonModel> ReturnUsers(int amount)
-    {
-        AddUsersToPeople(amount);
-        return people;
+        if (doubleRender)
+        {
+            doubleRender = false;
+            if (people.Count < usersDataChunkStartSize)
+            {
+                ResetPeopleStorage();
+                AddUsersToPeople(usersDataChunkStartSize);
+            }
+            else
+            {
+                AddUsersToPeople(usersDataChunkSize);
+            }
+        }
+        else
+        {
+            doubleRender = true;
+            AddUsersToPeople(usersDataChunkSize);
+        }
     }
 
     private void AddUsersToPeople(int amount)
@@ -73,39 +81,32 @@ public partial class Generator
         people.Add(user);
     }
 
-    private async Task<IEnumerable<PersonModel>> GetUsersData()
+    private void InitializeGenerator()
     {
-        var task = Task.Run(() => ReturnUsers(usersDataChunkSize));
-        var myOutput = await task;
-        return myOutput;
-    }
-
-    private async Task IitializeGenerator()
-    {
-        ReserPeopleStorage();
+        ResetPeopleStorage();
         SetLocaleValue();
         SetSeed();
         data = new(locale);
-        await Task.Run(() => ReturnUsers(usersDataChunkSize));
     }
 
     private void SetSeed()
     {
-        seed = int.Parse(UserSeed is not null ? UserSeed : "0");
+        seed = int.Parse(UserSeed is not null ?
+            UserSeed : userSeedDefaultValue);
         seed += (int)Math.Floor(errorValue * 100) + localeValue;
     }
 
-    private void ReserPeopleStorage()
+    private void ResetPeopleStorage()
     {
         people.Clear();
         counter = startCounter;
     }
 
-    private async Task GenerateRandomSeed()
+    private void GenerateRandomSeed()
     {
         Random t = new();
         UserSeed = t.Next(int.Parse(seedMaxRandomValue)).ToString();
-        await IitializeGenerator();
+        InitializeGenerator();
     }
 
     private void SetLocaleValue()

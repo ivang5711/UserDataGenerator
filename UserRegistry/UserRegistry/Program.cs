@@ -1,7 +1,5 @@
-using Microsoft.AspNetCore.ResponseCompression;
 using UserRegistry.Client.Pages;
 using UserRegistry.Components;
-using UserRegistry.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,14 +7,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents()
     .AddInteractiveWebAssemblyComponents();
-
-builder.Services.AddResponseCompression(opts =>
-{
-    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
-    new[] { "application/octet-stream" }
-    );
-}
-);
 
 var app = builder.Build();
 
@@ -41,8 +31,5 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode()
     .AddInteractiveWebAssemblyRenderMode()
     .AddAdditionalAssemblies(typeof(Counter).Assembly);
-
-app.MapBlazorHub();
-app.MapHub<ChatHub>("/chathub");
 
 app.Run();

@@ -1,11 +1,12 @@
 ﻿@page "/generator"
-@rendermode InteractiveAuto
-@using Microsoft.AspNetCore.Components.Web.Virtualization
-@using System.Diagnostics
+
+@rendermode InteractiveWebAssembly
 @using UserRegistry.Client.Models
-@inject NavigationManager _navigationManager
+@using Sve.Blazor.InfiniteScroll.Components
+
 
 <PageTitle>User Registry</PageTitle>
+
 <div class="container">
     <form class="row form-inline d-flex pb-3 justify-content-between">
         <div class="col-md-auto">
@@ -14,7 +15,7 @@
                        for="autoSizingSelect">Region:</label>
                 <div class="col-md-auto">
                     <select @bind="@locale" @bind:event="oninput"
-                            @onchange="IitializeGenerator" class="form-select"
+                            @onchange="InitializeGenerator" class="form-select"
                             id="autoSizingSelect">
                         @foreach (var item in Enum.GetValues(typeof(Countries)))
                         {
@@ -35,14 +36,14 @@
                     <input type="range" class="form-range" id="customRange1"
                            min="@errorMinValue" max="10" step="@errorValueStep"
                            @bind="errorValue" @bind:event="oninput"
-                           @onchange="IitializeGenerator">
+                           @onchange="InitializeGenerator">
                 </span>
                 <span class="col d-flex align-self-center">
                     <input type="number" class="form-control"
-                        @bind="@errorValue" @bind:event="oninput"
-                        @onchange="IitializeGenerator" min="@errorMinValue"
-                        max="1000" step="@errorValueStep"
-                        placeholder="Error count" aria-label="Error count">
+                           @bind="@errorValue" @bind:event="oninput"
+                           @onchange="InitializeGenerator" min="@errorMinValue"
+                           max="1000" step="@errorValueStep"
+                           placeholder="Error count" aria-label="Error count">
                 </span>
             </div>
         </div>
@@ -53,7 +54,7 @@
                 </label>
                 <span class="col-md-auto d-flex align-self-center">
                     <input type="number" min="0" max="@seedMaxRandomValue"
-                           class="form-control" @onchange="IitializeGenerator"
+                           class="form-control" @onchange="InitializeGenerator"
                            aria-label="Seed" @bind="UserSeed"
                            @bind:event="oninput" placeholder="Seed">
                 </span>
@@ -61,7 +62,7 @@
                     <button type="button" value="@UserSeed"
                             class="btn btn-outline-secondary"
                             @onclick="GenerateRandomSeed"
-                            @onchange="IitializeGenerator">
+                            @onchange="InitializeGenerator">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16"
                              height="16" fill="currentColor"
                              class="bi bi-shuffle" viewBox="0 0 16 16">
@@ -84,11 +85,12 @@
     </form>
 </div>
 
-<div class="container d-flex justify-content-between">
+<div class="container d-flex justify-content-between" style="height:1000px">
     <table class="table table-striped">
         <thead>
             <tr>
                 <th>#</th>
+                <th>Counter</th>
                 <th>Guid</th>
                 <th>Name</th>
                 <th>Address</th>
@@ -96,23 +98,24 @@
             </tr>
         </thead>
         <tbody>
-            <Virtualize Context="p" ItemsProvider="@LoadUserData"
-                        SpacerElement="tr" OverscanCount="4">
-                <ItemContent>
-                    <tr>
-                        <td>@p.Number</td>
-                        <td>@p.Id</td>
-                        <td>@p.Name</td>
-                        <td>@p.Address</td>
-                        <td>@p.Phone</td>
+            <InfiniteScroll ObserverTargetId="observerTarget"
+                            ObservableTargetReached="(e) =>
+                    GenerateChunkOfUsers()">
+                <Virtualize Context="p" Items="@people" OverscanCount="10"
+                            SpacerElement="tr" ItemSize="50">
+                    <tr @key="p.Number">
+                        <td>@people[p.Number - 1].Number</td>
+                        <td>@people.Count</td>
+                        <td>@people[p.Number - 1].Id</td>
+                        <td>@people[p.Number - 1].Name</td>
+                        <td>@people[p.Number - 1].Address</td>
+                        <td>@people[p.Number - 1].Phone</td>
                     </tr>
-                </ItemContent>
-                <Placeholder>
-                    <p>
-                        Loading...;
-                    </p>
-                </Placeholder>
-            </Virtualize>
+                </Virtualize>
+                <div class="list-group-item" id="observerTarget"></div>
+            </InfiniteScroll>
         </tbody>
     </table>
 </div>
+
+<script src="_content/Sve.Blazor.InfiniteScroll/js/Observer.js"></script>
