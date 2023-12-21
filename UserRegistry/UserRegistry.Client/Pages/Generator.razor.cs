@@ -24,15 +24,9 @@ public partial class Generator
     private static readonly Dictionary<string, string> locales = new()
 {
     {"USA", "en" },
-    { "Georgia", "ge" },
     { "Germany", "de" },
-    { "Korea", "ko" },
-    { "China", "zh_CN" },
-    { "Czech", "cz" },
-    { "Slovakia", "sk" },
-    { "Russia", "ru" },
-    { "Greece", "el" },
-    { "Japan", "ja" },
+    { "Canada", "en_CA" },
+    { "France", "fr" }
 };
 
     protected override async Task OnInitializedAsync()

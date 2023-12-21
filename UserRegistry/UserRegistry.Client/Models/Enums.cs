@@ -12,13 +12,7 @@ public enum CreditRating
 public enum Countries
 {
     USA,
-    Georgia,
     Germany,
-    Korea,
-    China,
-    Czech,
-    Slovakia,
-    Russia,
-    Greece,
-    Japan,
+    Canada,
+    France
 }
