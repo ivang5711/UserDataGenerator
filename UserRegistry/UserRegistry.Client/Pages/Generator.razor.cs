@@ -37,17 +37,15 @@ public partial class Generator
 
     protected override async Task OnInitializedAsync()
     {
-        await ClearPeopleStorage();
+        await IitializeGenerator();
     }
 
     private string? UserSeed
     {
         get => _userSeed;
-        set
-        {
-            _userSeed = value is not null && int.TryParse(value.Trim(), out _) ?
+        set => _userSeed =
+            value is not null && int.TryParse(value.Trim(), out _) ?
             value.Trim() : userSeedDefaultValue;
-        }
     }
 
     private async ValueTask<ItemsProviderResult<PersonModel>> LoadUserData(
@@ -62,14 +60,23 @@ public partial class Generator
 
     private List<PersonModel> ReturnUsers(int amount)
     {
+        AddUsersToPeople(amount);
+        return people;
+    }
+
+    private void AddUsersToPeople(int amount)
+    {
         for (int i = 0; i < amount; i++)
         {
-            PersonModel user = data.GeneratePerson(seed++);
-            user.Number = counter++;
-            people.Add(user);
+            AddUserToPeople();
         }
+    }
 
-        return people;
+    private void AddUserToPeople()
+    {
+        PersonModel user = data.GeneratePerson(seed++);
+        user.Number = counter++;
+        people.Add(user);
     }
 
     private async Task<IEnumerable<PersonModel>> GetUsersData()
@@ -79,30 +86,38 @@ public partial class Generator
         return myOutput;
     }
 
-    private async Task ClearPeopleStorage()
+    private async Task IitializeGenerator()
+    {
+        ReserPeopleStorage();
+        SetLocaleValue();
+        SetSeed();
+        data = new(locale);
+        await Task.Run(() => ReturnUsers(usersDataChunkSize));
+    }
+
+    private void SetSeed()
+    {
+        seed = int.Parse(UserSeed is not null ? UserSeed : "0");
+        seed += (int)Math.Floor(errorValue * 100) + localeValue;
+    }
+
+    private void ReserPeopleStorage()
     {
         people.Clear();
-        seed = int.Parse(UserSeed is not null ? UserSeed : "0");
-        SetLocaleValue();
-        seed += (int)Math.Floor(errorValue * 100) + localeValue;
-        data = new(locale);
         counter = startCounter;
-        await Task.Run(() => ReturnUsers(usersDataChunkSize));
-        StateHasChanged();
     }
 
     private async Task GenerateRandomSeed()
     {
         Random t = new();
         UserSeed = t.Next(int.Parse(seedMaxRandomValue)).ToString();
-        await ClearPeopleStorage();
+        await IitializeGenerator();
     }
 
     private void SetLocaleValue()
     {
         localeValue = 0;
-        char[] f = locale.ToCharArray();
-        foreach (var item in f)
+        foreach (char item in locale)
         {
             localeValue += Convert.ToInt32(item);
         }

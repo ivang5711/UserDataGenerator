@@ -14,7 +14,7 @@
                    for="autoSizingSelect">Region:</label>
             <div class="col-md-auto">
                 <select @bind="@locale" @bind:event="oninput"
-                        @onchange="ClearPeopleStorage" class="form-select"
+                        @onchange="IitializeGenerator" class="form-select"
                         id="autoSizingSelect">
                     @foreach (var country in Enum.GetValues(typeof(Countries)))
                     {
@@ -34,11 +34,11 @@
                 <input type="range" class="form-range" id="customRange1"
                        min="@errorMinValue" max="10" step="@errorValueStep"
                        @bind="errorValue" @bind:event="oninput"
-                       @onchange="ClearPeopleStorage">
+                       @onchange="IitializeGenerator">
             </span>
             <span class="col d-flex align-self-center">
                 <input type="number" class="form-control" @bind="@errorValue"
-                       @bind:event="oninput" @onchange="ClearPeopleStorage"
+                       @bind:event="oninput" @onchange="IitializeGenerator"
                        min="@errorMinValue" max="1000" step="@errorValueStep"
                        placeholder="Error count" aria-label="Error count">
             </span>
@@ -53,13 +53,13 @@
                 <input type="number" min="0" max="@seedMaxRandomValue"
                     class="form-control" placeholder="Seed" aria-label="Seed"
                        @bind="UserSeed" @bind:event="oninput"
-                       @onchange="ClearPeopleStorage">
+                       @onchange="IitializeGenerator">
             </span>
             <span class="col d-flex align-self-center">
                 <button type="button" value="@UserSeed"
                         class="btn btn-outline-secondary"
                         @onclick="GenerateRandomSeed"
-                        @onchange="ClearPeopleStorage">
+                        @onchange="IitializeGenerator">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16"
                          height="16" fill="currentColor" class="bi bi-shuffle"
                          viewBox="0 0 16 16">
