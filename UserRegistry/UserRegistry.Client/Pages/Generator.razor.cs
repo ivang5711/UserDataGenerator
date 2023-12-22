@@ -1,8 +1,7 @@
 using MathNet.Numerics.Distributions;
-using Microsoft.JSInterop;
-using System.Text;
-using System.Text.Json;
+using System;
 using UserRegistry.Client.Models;
+using UserRegistry.Client.Services;
 
 namespace UserRegistry.Client.Pages;
 
@@ -16,16 +15,6 @@ public partial class Generator
     private const string seedMaxRandomValue = "1999999999";
     private const string userSeedDefaultValue = "0";
     private const string localeDefaultValue = "en";
-    private const char csvSeparator = ',';
-
-    private const string dateTimeFormatStringCsvExport =
-        "yyyy'-'MM'-'dd'-'HH:mm:ss";
-
-    private static readonly string[] visibleColumns =
-        ["Number", "Id", "Name", "Address", "Phone"];
-
-    private const string fileNameBaseCsvExport = "scrolled-data-";
-    private const string fileExtension = "csv";
     private string locale = localeDefaultValue;
     private decimal errorValue = 0;
     private int localeValue = 0;
@@ -35,20 +24,21 @@ public partial class Generator
     private DataGenerator data = new(localeDefaultValue);
     private List<PersonModel> people = [];
     private bool doubleRender = false;
-    private int _nameMistakesCount;
-    private int _addressMistakesCount;
-    private int _phoneMistakesCount;
-    private int _errorPosition;
-    private int _errorType;
-    private int errorCharCounter = 0;
+    private RandomErrorCreator errorCreator;
+    private decimal errorProbability = 0;
+
+    public async Task Download()
+    {
+        CsvCreator csvCreator = new(JSRuntime, people);
+        await csvCreator.SaveToCsv();
+    }
 
     private static readonly Dictionary<string, string> locales = new()
     {
-        {"USA", "en" },
+        { "USA", "en" },
         { "Germany", "de" },
         { "Canada", "en_CA" },
         { "France", "fr" },
-        { "Russia", "ru" },
         { "Korea", "ko" }
     };
 
@@ -64,6 +54,34 @@ public partial class Generator
         set => _userSeed =
             value is not null && int.TryParse(value.Trim(), out _) ?
             value.Trim() : userSeedDefaultValue;
+    }
+
+    private void GetErrorProbability()
+    {
+        decimal temp = Math.Floor(errorValue);
+        decimal result = errorValue - temp;
+        if (result > 0)
+        {
+            errorProbability = result;
+        }
+        else
+        {
+            errorProbability = 0;
+        }
+    }
+
+    private void GetErrorWithProbability()
+    {
+        int multiplier = 10000;
+        var t = new Random(seed + (int)errorValue);
+        var continuousDistribution = new ContinuousUniform(0, multiplier, t);
+        var dice = continuousDistribution.Sample();
+
+        if (dice <= (double)Math.Round(errorProbability * multiplier))
+        {
+            errorValue++;
+            Console.WriteLine($"Dice: {dice}, ErrorProbability: {errorProbability}\nError value: {errorValue}");
+        }
     }
 
     private void GenerateChunkOfUsers()
@@ -98,20 +116,24 @@ public partial class Generator
 
     private void InitializeGenerator()
     {
-        ResetErrorCounters();
-        ResetPeopleStorage();
-        SetLocaleValue();
-        SetSeed();
+        RefreshState();
         data = new(locale);
+        errorCreator = new(seed, errorValue, data);
+        errorCreator.ResetErrorCounters();
     }
 
-    private void ResetErrorCounters()
+    private void RefreshState()
     {
-        _nameMistakesCount = 0;
-        _addressMistakesCount = 0;
-        _phoneMistakesCount = 0;
-        _errorPosition = 0;
-        _errorType = 0;
+        ResetPeopleStorage();
+        SetLocaleValue();
+        SetUpErrorValue();
+        SetSeed();
+    }
+
+    private void SetUpErrorValue()
+    {
+        GetErrorProbability();
+        GetErrorWithProbability();
     }
 
     private void SetSeed()
@@ -143,211 +165,20 @@ public partial class Generator
         }
     }
 
-    private async Task SaveToCsv()
-    {
-        var t = DateTime.Now;
-        string fileName = $"{fileNameBaseCsvExport}" +
-            $"{t.ToString(dateTimeFormatStringCsvExport)}";
-        await DownloadObject(people, $"{fileName}.{fileExtension}");
-    }
-
-    private async Task DownloadObject(object objectToSave, string fileName)
-    {
-        GetDataForCsvString(objectToSave, out List<string[]> totalRows);
-        string csv = CreateCsvString(totalRows);
-        var fileStream = new MemoryStream(new UTF8Encoding(true).GetBytes(csv));
-        using var streamRef = new DotNetStreamReference(stream: fileStream);
-        await JSRuntime.InvokeVoidAsync("downloadFileFromStream",
-            fileName, streamRef);
-    }
-
-    private static void GetDataForCsvString(object objectToSave,
-        out List<string[]> totalRows)
-    {
-        SerializeData(objectToSave, out JsonDocument document,
-            out JsonElement.ArrayEnumerator root);
-        totalRows = [];
-        GetSerializedData(totalRows, root);
-    }
-
-    private static void GetSerializedData(List<string[]> totalRows, JsonElement.ArrayEnumerator root)
-    {
-        if (root.Any())
-        {
-            GetDataRows(root, totalRows);
-        }
-    }
-
-    private static string CreateCsvString(List<string[]> totalRows)
-    {
-        string[] columnNames = visibleColumns;
-        var rows = totalRows.ToArray();
-        var csv = Csv.CsvWriter.WriteToText(columnNames, rows, csvSeparator);
-        return csv;
-    }
-
-    private static void SerializeData(object objectToSave,
-        out JsonDocument document, out JsonElement.ArrayEnumerator root)
-    {
-        document = JsonSerializer.SerializeToDocument(objectToSave);
-        root = document.RootElement.EnumerateArray();
-    }
-
-    private static void GetDataRows(JsonElement.ArrayEnumerator root,
-        List<string[]> totalRows)
-    {
-        foreach (var element in root)
-        {
-            AddDataRow(totalRows, element);
-        }
-    }
-
-    private static void AddDataRow(List<string[]> totalRows, JsonElement element)
-    {
-        var row = element.EnumerateObject().Select(o => o.Value.ToString());
-        List<string> rowsResult = [];
-        rowsResult.AddRange(row);
-        totalRows.Add([.. rowsResult]);
-    }
-
     private void AddUserToPeople()
     {
-        DefineErrorDistribution();
+        errorCreator.DefineErrorDistribution();
         PersonModel user = data.GeneratePerson(seed++);
         UpdateUserData(user);
         people.Add(user);
-        ResetErrorCounters();
+        errorCreator.ResetErrorCounters();
     }
 
     private void UpdateUserData(PersonModel user)
     {
         user.Number = counter++;
-        user.Name = AddMistakes(user.Name, _nameMistakesCount);
-        user.Address = AddMistakes(user.Address, _addressMistakesCount);
-        user.Phone = AddMistakes(user.Phone, _phoneMistakesCount);
-    }
-
-    private static string DeleteSymbolError(string input, int position)
-    {
-        StringBuilder sb = new(input, 100);
-        sb.Remove(position + 1, 1);
-        return sb.ToString();
-    }
-
-    private string AddSymbolError(string input, int position)
-    {
-        StringBuilder sb = new(input, 100);
-        sb.Insert(position, GetChar());
-        return sb.ToString();
-    }
-
-    private static string ReplaceNeighboursError(string input, int position)
-    {
-        StringBuilder sb = new(input, 100);
-        (sb[position - 1], sb[position]) =
-            (sb[position], sb[position - 1]);
-        return sb.ToString();
-    }
-
-    private int DefineErrorType()
-    {
-        var t = new Random(seed + (int)errorValue + _errorType++);
-        return GetNormalDistributedValue(0, 4, t);
-    }
-
-    private string AddRandomError(string input)
-    {
-        if (input.Length > 2)
-        {
-            int type = DefineErrorType();
-            int position = DefineErrorPosition(input);
-            if (type == 1)
-            {
-                return AddSymbolError(input, position);
-            }
-            else if (type == 2)
-            {
-                return ReplaceNeighboursError(input, position);
-            }
-            else
-            {
-                return DeleteSymbolError(input, position);
-            }
-        }
-
-        return input;
-    }
-
-    private int DefineErrorPosition(string name)
-    {
-        var t = new Random(seed + (int)errorValue + _errorPosition++);
-        return GetNormalDistributedValue(0, name.Length - 1, t);
-    }
-
-    private string AddMistakes(string name, int count)
-    {
-        string tmp = name;
-        if (name.Length > 2)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                tmp = AddRandomError(tmp);
-            }
-        }
-
-        return tmp;
-    }
-
-    private void DefineErrorDistribution()
-    {
-        for (int i = 0; i < (int)errorValue; i++)
-        {
-            var t = new Random(seed + (int)errorValue + i);
-            int temp = GetNormalDistributedValue(0, 4, t);
-
-            if (temp == 1)
-            {
-                _nameMistakesCount++;
-            }
-            else if (temp == 2)
-            {
-                _addressMistakesCount++;
-            }
-            else
-            {
-                _phoneMistakesCount++;
-            }
-        }
-    }
-
-    private static int GetNormalDistributedValue(
-        int lower, int upper, Random random)
-    {
-        double sample;
-        var continuousDistribution =
-            new ContinuousUniform(lower, upper, random);
-        do
-        {
-            sample = RetrieveSample(continuousDistribution);
-        } while (sample < lower + 1 || sample > upper - 1);
-        return Convert.ToInt32(sample);
-    }
-
-    private static double RetrieveSample(
-        ContinuousUniform continuousDistribution)
-    {
-        double sample;
-        double continuusDistribution = continuousDistribution.Sample();
-        sample = Math.Round(continuusDistribution);
-        return sample;
-    }
-
-    private char GetChar()
-    {
-        string result = data.GenerateLetters(seed).AlfaNumericSet;
-        var t = new Random(seed + (int)errorValue +
-            errorCharCounter++ + result.Length);
-        int index = GetNormalDistributedValue(0, result.Length - 1, t);
-        return result[index];
+        user.Name = errorCreator.AddMistakes(user.Name, errorCreator.NameMistakesCount);
+        user.Address = errorCreator.AddMistakes(user.Address, errorCreator.AddressMistakesCount);
+        user.Phone = errorCreator.AddMistakes(user.Phone, errorCreator.PhoneMistakesCount);
     }
 }

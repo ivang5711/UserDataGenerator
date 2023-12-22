@@ -5,6 +5,5 @@ public enum Countries
     Germany,
     Canada,
     France,
-    Russia,
     Korea
 }
