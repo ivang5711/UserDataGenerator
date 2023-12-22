@@ -21,6 +21,9 @@ public partial class Generator
     private const string dateTimeFormatStringCsvExport =
         "yyyy'-'MM'-'dd'-'HH:mm:ss";
 
+    private static readonly string[] visibleColumns =
+        ["Number", "Id", "Name", "Address", "Phone"];
+
     private const string fileNameBaseCsvExport = "scrolled-data-";
     private const string fileExtension = "csv";
     private string locale = localeDefaultValue;
@@ -150,9 +153,8 @@ public partial class Generator
 
     private async Task DownloadObject(object objectToSave, string fileName)
     {
-        GetDataForCsvString(objectToSave, out List<string> headersResult,
-            out List<string[]> totalRows);
-        string csv = CreateCsvString(headersResult, totalRows);
+        GetDataForCsvString(objectToSave, out List<string[]> totalRows);
+        string csv = CreateCsvString(totalRows);
         var fileStream = new MemoryStream(new UTF8Encoding(true).GetBytes(csv));
         using var streamRef = new DotNetStreamReference(stream: fileStream);
         await JSRuntime.InvokeVoidAsync("downloadFileFromStream",
@@ -160,28 +162,25 @@ public partial class Generator
     }
 
     private static void GetDataForCsvString(object objectToSave,
-        out List<string> headersResult, out List<string[]> totalRows)
+        out List<string[]> totalRows)
     {
         SerializeData(objectToSave, out JsonDocument document,
             out JsonElement.ArrayEnumerator root);
-        headersResult = [];
         totalRows = [];
-        GetSerializedData(headersResult, totalRows, root);
+        GetSerializedData(totalRows, root);
     }
 
-    private static void GetSerializedData(List<string> headersResult,
-        List<string[]> totalRows, JsonElement.ArrayEnumerator root)
+    private static void GetSerializedData(List<string[]> totalRows, JsonElement.ArrayEnumerator root)
     {
         if (root.Any())
         {
-            GetDataRows(root, headersResult, totalRows);
+            GetDataRows(root, totalRows);
         }
     }
 
-    private static string CreateCsvString(List<string> headersResult,
-        List<string[]> totalRows)
+    private static string CreateCsvString(List<string[]> totalRows)
     {
-        var columnNames = headersResult.ToArray();
+        string[] columnNames = visibleColumns;
         var rows = totalRows.ToArray();
         var csv = Csv.CsvWriter.WriteToText(columnNames, rows, csvSeparator);
         return csv;
@@ -195,20 +194,12 @@ public partial class Generator
     }
 
     private static void GetDataRows(JsonElement.ArrayEnumerator root,
-        List<string> headersResult, List<string[]> totalRows)
+        List<string[]> totalRows)
     {
-        AddDataHeader(root, headersResult);
         foreach (var element in root)
         {
             AddDataRow(totalRows, element);
         }
-    }
-
-    private static void AddDataHeader(JsonElement.ArrayEnumerator root,
-        List<string> headersResult)
-    {
-        var headers = root.First().EnumerateObject().Select(o => o.Name);
-        headersResult.AddRange(headers);
     }
 
     private static void AddDataRow(List<string[]> totalRows, JsonElement element)
@@ -238,47 +229,24 @@ public partial class Generator
 
     private static string DeleteSymbolError(string input, int position)
     {
-        char[] chars = input.ToCharArray();
-        char[] res = new char[chars.Length - 1];
-        int a = 0;
-        for (int i = 0; i < chars.Length; i++)
-        {
-            if (i == position)
-            {
-                continue;
-            }
-            res[a] = chars[i];
-            a++;
-        }
-
-        return new string(res);
+        StringBuilder sb = new(input, 100);
+        sb.Remove(position + 1, 1);
+        return sb.ToString();
     }
 
     private string AddSymbolError(string input, int position)
     {
-        char[] chars = input.ToCharArray();
-        char[] res = new char[chars.Length + 1];
-        int a = 0;
-        for (int i = 0; i < chars.Length; i++)
-        {
-            if (i == position)
-            {
-                res[a] = GetChar();
-                a++;
-            }
-            res[a] = chars[i];
-            a++;
-        }
-
-        return new string(res);
+        StringBuilder sb = new(input, 100);
+        sb.Insert(position, GetChar());
+        return sb.ToString();
     }
 
     private static string ReplaceNeighboursError(string input, int position)
     {
-        char[] chars = input.ToCharArray();
-        (chars[position - 1], chars[position]) =
-            (chars[position], chars[position - 1]);
-        return new string(chars);
+        StringBuilder sb = new(input, 100);
+        (sb[position - 1], sb[position]) =
+            (sb[position], sb[position - 1]);
+        return sb.ToString();
     }
 
     private int DefineErrorType()
@@ -289,7 +257,7 @@ public partial class Generator
 
     private string AddRandomError(string input)
     {
-        if (input.Length > 3)
+        if (input.Length > 2)
         {
             int type = DefineErrorType();
             int position = DefineErrorPosition(input);
@@ -319,7 +287,7 @@ public partial class Generator
     private string AddMistakes(string name, int count)
     {
         string tmp = name;
-        if (name.Length > 3)
+        if (name.Length > 2)
         {
             for (int i = 0; i < count; i++)
             {
@@ -332,9 +300,9 @@ public partial class Generator
 
     private void DefineErrorDistribution()
     {
-        var t = new Random(seed + (int)errorValue);
         for (int i = 0; i < (int)errorValue; i++)
         {
+            var t = new Random(seed + (int)errorValue + i);
             int temp = GetNormalDistributedValue(0, 4, t);
 
             if (temp == 1)

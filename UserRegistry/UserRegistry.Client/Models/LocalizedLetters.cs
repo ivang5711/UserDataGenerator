@@ -2,9 +2,9 @@
 
 public class LocalizedLetters
 {
-    public string Letters { get; set; }
+    public required string Letters { get; set; }
 
-    public string Digits { get; set; }
+    public required string Digits { get; set; }
 
-    public string AlfaNumericSet { get; set; }
+    public required string AlfaNumericSet { get; set; }
 }
