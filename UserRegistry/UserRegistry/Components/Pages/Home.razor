@@ -1,4 +1,5 @@
 ﻿@page "/"
+@inject NavigationManager NavManager
 
 
 <h1>Redirect Page</h1>
@@ -6,8 +7,8 @@
 <p>Redirecting to Default Page</p>
 
 @code {
-    //protected override void OnInitialized()
-   // {
-        //NavManager.NavigateTo("/generator");
-   // }
+    protected override void OnInitialized()
+   {
+        NavManager.NavigateTo("/generator");
+   }
 }
