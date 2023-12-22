@@ -21,7 +21,6 @@ public class DataGenerator(string locale)
             u.State = f.Person.Address.State;
             u.ZipCode = f.Person.Address.ZipCode;
             u.Suite = f.Person.Address.Suite;
-            u.Rating = f.PickRandom<CreditRating>();
             u.Name = $"{u.FirstName} {u.MiddleName} {u.LastName}";
             u.Address = ShuffleAddress(u.Name, u.City, u.Email, u.Phone,
             u.StreetAddress, u.Suite, u.ZipCode, u.State);

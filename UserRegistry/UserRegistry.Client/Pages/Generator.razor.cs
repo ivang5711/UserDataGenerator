@@ -1,3 +1,5 @@
+using Microsoft.JSInterop;
+using System.Text;
 using UserRegistry.Client.Models;
 
 namespace UserRegistry.Client.Pages;
@@ -116,5 +118,38 @@ public partial class Generator
         {
             localeValue += Convert.ToInt32(item);
         }
+    }
+
+    private async Task SaveToCsv()
+    {
+        await downloadObject(people, "people.csv");
+    }
+
+    private async Task downloadObject(object objectToSave, string fileName)
+    {
+        using var document = System.Text.Json.JsonSerializer.SerializeToDocument(objectToSave);
+        var root = document.RootElement.EnumerateArray();
+        List<string> headersResult = [];
+        List<string[]> totalRows = [];
+
+        if (root.Any())
+        {
+            var headers = root.First().EnumerateObject().Select(o => o.Name);
+            headersResult.AddRange(headers);
+            foreach (var element in root)
+            {
+                var row = element.EnumerateObject().Select(o => o.Value.ToString());
+                List<string> rowsResult = [];
+                rowsResult.AddRange(row);
+                totalRows.Add(rowsResult.ToArray());
+            }
+        }
+
+        var columnNames = headersResult.ToArray();
+        var rows = totalRows.ToArray();
+        var csv = Csv.CsvWriter.WriteToText(columnNames, rows, ',');
+        var fileStream = new MemoryStream(new UTF8Encoding(true).GetBytes(csv));
+        using var streamRef = new DotNetStreamReference(stream: fileStream);
+        await JSRuntime.InvokeVoidAsync("downloadFileFromStream", fileName, streamRef);
     }
 }

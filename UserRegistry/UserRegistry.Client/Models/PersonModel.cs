@@ -18,5 +18,4 @@ public record PersonModel
     public string Suite { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
 
-    public CreditRating Rating { get; set; }
 }

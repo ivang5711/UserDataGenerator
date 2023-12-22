@@ -1,9 +1,14 @@
 ﻿@page "/generator"
 
-@rendermode InteractiveWebAssembly
+@rendermode InteractiveAuto
 @using UserRegistry.Client.Models
 @using Sve.Blazor.InfiniteScroll.Components
-
+@using Csv
+@using System.Text.Json
+@using Microsoft.JSInterop
+@inject IJSRuntime JSRuntime
+@using System
+@using System.Text
 
 <PageTitle>User Registry</PageTitle>
 
@@ -76,7 +81,7 @@
         <div class="col-md-auto d-flex align-self-end justify-content-between">
             <div class="row d-flex align-self-center">
                 <span class="col d-flex align-self-center">
-                    <button type="button" class="btn btn-secondary">
+                    <button type="button" class="btn btn-secondary" @onclick="@SaveToCsv">
                         Export
                     </button>
                 </span>
@@ -119,3 +124,20 @@
 </div>
 
 <script src="_content/Sve.Blazor.InfiniteScroll/js/Observer.js"></script>
+
+<script>
+    window.downloadFileFromStream = async (fileName, contentStreamReference) => {
+        const arrayBuffer = await contentStreamReference.arrayBuffer();
+        const blob = new Blob([arrayBuffer]);
+        const url = URL.createObjectURL(blob);
+        const anchorElement = document.createElement('a');
+        anchorElement.href = url;
+        if (fileName) {
+            anchorElement.download = fileName;
+        }
+
+        anchorElement.click();
+        anchorElement.remove();
+        URL.revokeObjectURL(url);
+    }
+</script>
