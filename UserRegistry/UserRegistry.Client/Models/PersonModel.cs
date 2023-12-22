@@ -17,5 +17,4 @@ public record PersonModel
     public string ZipCode { get; set; } = string.Empty;
     public string Suite { get; set; } = string.Empty;
     public string Address { get; set; } = string.Empty;
-
 }

@@ -95,7 +95,6 @@
         <thead>
             <tr>
                 <th>#</th>
-                <th>Counter</th>
                 <th>Guid</th>
                 <th>Name</th>
                 <th>Address</th>
@@ -110,7 +109,6 @@
                             SpacerElement="tr" ItemSize="50">
                     <tr @key="p.Number">
                         <td>@people[p.Number - 1].Number</td>
-                        <td>@people.Count</td>
                         <td>@people[p.Number - 1].Id</td>
                         <td>@people[p.Number - 1].Name</td>
                         <td>@people[p.Number - 1].Address</td>

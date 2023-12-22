@@ -26,6 +26,21 @@ public class DataGenerator(string locale)
             u.StreetAddress, u.Suite, u.ZipCode, u.State);
         });
 
+    private readonly Faker<LocalizedLetters> lettersFaker = new Faker<LocalizedLetters>(locale)
+        .StrictMode(false)
+        .Rules((f, u) =>
+        {
+            u.Letters = f.Person.FirstName;
+            u.Digits = f.Finance.Account();
+            u.AlfaNumericSet = u.Letters + u.Digits;
+        }
+            );
+
+    public LocalizedLetters GenerateLetters(int seed)
+    {
+        return lettersFaker.UseSeed(seed).Generate();
+    }
+
     public PersonModel GeneratePerson(int seed)
     {
         return personModelFake.UseSeed(seed).Generate();
