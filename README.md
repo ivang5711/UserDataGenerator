@@ -17,8 +17,8 @@ Therefore as long as the values provided remain the same so does the result.
 ---
 
 >You can play with the deployed test version on:\
-<a href="/">
-<u><i>user-registry.azurewebsites.net</i></u>
+<a href="https://task-5-user-registry.azurewebsites.net/">
+<u><i>task-5-user-registry.azurewebsites.net/</i></u>
 </a>
 
 <img src="img/user-registry.png" alt="main-page" width="540">
