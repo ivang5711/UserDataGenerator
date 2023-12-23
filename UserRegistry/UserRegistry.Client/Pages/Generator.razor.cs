@@ -1,5 +1,4 @@
 using MathNet.Numerics.Distributions;
-using System;
 using UserRegistry.Client.Models;
 using UserRegistry.Client.Services;
 
@@ -24,7 +23,7 @@ public partial class Generator
     private DataGenerator data = new(localeDefaultValue);
     private List<PersonModel> people = [];
     private bool doubleRender = false;
-    private RandomErrorCreator errorCreator;
+    private RandomErrorCreator? errorCreator;
     private decimal errorProbability = 0;
 
     public async Task Download()
@@ -60,28 +59,32 @@ public partial class Generator
     {
         decimal temp = Math.Floor(errorValue);
         decimal result = errorValue - temp;
-        if (result > 0)
-        {
-            errorProbability = result;
-        }
-        else
-        {
-            errorProbability = 0;
-        }
+        errorProbability = result > 0 ? result : 0;
     }
 
     private void GetErrorWithProbability()
     {
-        int multiplier = 10000;
-        var t = new Random(seed + (int)errorValue);
-        var continuousDistribution = new ContinuousUniform(0, multiplier, t);
-        var dice = continuousDistribution.Sample();
+        if (errorProbability != 0)
+        {
+            CalculateErrorWithProbability();
+        }
+    }
 
+    private void CalculateErrorWithProbability()
+    {
+        RollErrorDice(out int multiplier, out double dice);
         if (dice <= (double)Math.Round(errorProbability * multiplier))
         {
             errorValue++;
-            Console.WriteLine($"Dice: {dice}, ErrorProbability: {errorProbability}\nError value: {errorValue}");
         }
+    }
+
+    private void RollErrorDice(out int multiplier, out double dice)
+    {
+        multiplier = 10000;
+        var t = new Random(seed + (int)errorValue);
+        var continuousDistribution = new ContinuousUniform(0, multiplier, t);
+        dice = continuousDistribution.Sample();
     }
 
     private void GenerateChunkOfUsers()
@@ -89,19 +92,24 @@ public partial class Generator
         if (doubleRender)
         {
             doubleRender = false;
-            if (people.Count < usersDataChunkStartSize)
-            {
-                ResetPeopleStorage();
-                AddUsersToPeople(usersDataChunkStartSize);
-            }
-            else
-            {
-                AddUsersToPeople(usersDataChunkSize);
-            }
+            CheckFirstRender();
         }
         else
         {
             doubleRender = true;
+            AddUsersToPeople(usersDataChunkSize);
+        }
+    }
+
+    private void CheckFirstRender()
+    {
+        if (people.Count < usersDataChunkStartSize)
+        {
+            ResetPeopleStorage();
+            AddUsersToPeople(usersDataChunkStartSize);
+        }
+        else
+        {
             AddUsersToPeople(usersDataChunkSize);
         }
     }
@@ -167,7 +175,7 @@ public partial class Generator
 
     private void AddUserToPeople()
     {
-        errorCreator.DefineErrorDistribution();
+        errorCreator!.DefineErrorDistribution();
         PersonModel user = data.GeneratePerson(seed++);
         UpdateUserData(user);
         people.Add(user);
@@ -177,8 +185,11 @@ public partial class Generator
     private void UpdateUserData(PersonModel user)
     {
         user.Number = counter++;
-        user.Name = errorCreator.AddMistakes(user.Name, errorCreator.NameMistakesCount);
-        user.Address = errorCreator.AddMistakes(user.Address, errorCreator.AddressMistakesCount);
-        user.Phone = errorCreator.AddMistakes(user.Phone, errorCreator.PhoneMistakesCount);
+        user.Name = errorCreator!.AddMistakes(
+            user.Name, errorCreator.NameMistakesCount);
+        user.Address = errorCreator.AddMistakes(
+            user.Address, errorCreator.AddressMistakesCount);
+        user.Phone = errorCreator.AddMistakes(
+            user.Phone, errorCreator.PhoneMistakesCount);
     }
 }

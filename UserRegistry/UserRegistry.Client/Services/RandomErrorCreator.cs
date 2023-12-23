@@ -4,7 +4,8 @@ using UserRegistry.Client.Models;
 
 namespace UserRegistry.Client.Services
 {
-    public class RandomErrorCreator(int seed, decimal errorValue, DataGenerator dataGenerator)
+    public class RandomErrorCreator(int seed, decimal errorValue,
+        DataGenerator dataGenerator)
     {
         private int _errorPosition;
         private int _errorType;
@@ -19,12 +20,17 @@ namespace UserRegistry.Client.Services
 
         public void ResetErrorCounters()
         {
-            NameMistakesCount = 0;
-            AddressMistakesCount = 0;
-            PhoneMistakesCount = 0;
+            ResetMistakesCounters();
             _errorPosition = 0;
             _errorType = 0;
             errorCharCounter = 0;
+        }
+
+        private void ResetMistakesCounters()
+        {
+            NameMistakesCount = 0;
+            AddressMistakesCount = 0;
+            PhoneMistakesCount = 0;
         }
 
         public string AddMistakes(string name, int count)
@@ -32,10 +38,17 @@ namespace UserRegistry.Client.Services
             string tmp = name;
             if (name.Length > 2)
             {
-                for (int i = 0; i < count; i++)
-                {
-                    tmp = AddRandomError(tmp);
-                }
+                tmp = AddMistakesToRecord(count, tmp);
+            }
+
+            return tmp;
+        }
+
+        private string AddMistakesToRecord(int count, string tmp)
+        {
+            for (int i = 0; i < count; i++)
+            {
+                tmp = AddRandomError(tmp);
             }
 
             return tmp;
@@ -45,21 +58,30 @@ namespace UserRegistry.Client.Services
         {
             for (int i = 0; i < (int)errorValue; i++)
             {
-                var t = new Random(seed + (int)errorValue + i);
-                int temp = GetNormalDistributedValue(0, 4, t);
+                GetErrorType(i);
+            }
+        }
 
-                if (temp == 1)
-                {
-                    NameMistakesCount++;
-                }
-                else if (temp == 2)
-                {
-                    AddressMistakesCount++;
-                }
-                else
-                {
-                    PhoneMistakesCount++;
-                }
+        private void GetErrorType(int i)
+        {
+            var t = new Random(seed + (int)errorValue + i);
+            int temp = GetNormalDistributedValue(0, 4, t);
+            PickErrorType(temp);
+        }
+
+        private void PickErrorType(int temp)
+        {
+            if (temp == 1)
+            {
+                NameMistakesCount++;
+            }
+            else if (temp == 2)
+            {
+                AddressMistakesCount++;
+            }
+            else
+            {
+                PhoneMistakesCount++;
             }
         }
 
@@ -95,28 +117,33 @@ namespace UserRegistry.Client.Services
         {
             if (input.Length > 2)
             {
-                int type = DefineErrorType();
-                int position = DefineErrorPosition(input);
-                if (type == 1)
-                {
-                    return AddSymbolError(input, position);
-                }
-                else if (type == 2)
-                {
-                    return ReplaceNeighboursError(input, position);
-                }
-                else
-                {
-                    return DeleteSymbolError(input, position);
-                }
+                return PickRandomError(input);
             }
 
             return input;
         }
 
+        private string PickRandomError(string input)
+        {
+            int type = DefineErrorType();
+            int position = DefineErrorPosition(input);
+            if (type == 1)
+            {
+                return AddSymbolError(input, position);
+            }
+            else if (type == 2)
+            {
+                return ReplaceNeighboursError(input, position);
+            }
+            else
+            {
+                return DeleteSymbolError(input, position);
+            }
+        }
+
         private int DefineErrorPosition(string name)
         {
-            var t = new Random(seed + (int)errorValue + _errorPosition++);
+            Random t = new(seed + (int)errorValue + _errorPosition++);
             return GetNormalDistributedValue(0, name.Length - 1, t);
         }
 
@@ -124,8 +151,8 @@ namespace UserRegistry.Client.Services
             int lower, int upper, Random random)
         {
             double sample;
-            var continuousDistribution =
-                new ContinuousUniform(lower, upper, random);
+            ContinuousUniform continuousDistribution =
+                new(lower, upper, random);
             do
             {
                 sample = RetrieveSample(continuousDistribution);
@@ -145,7 +172,7 @@ namespace UserRegistry.Client.Services
         private char GetChar()
         {
             string result = dataGenerator.GenerateLetters(seed).AlfaNumericSet;
-            var t = new Random(seed + (int)errorValue +
+            Random t = new(seed + (int)errorValue +
                 errorCharCounter++ + result.Length);
             int index = GetNormalDistributedValue(0, result.Length - 1, t);
             return result[index];

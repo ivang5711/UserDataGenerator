@@ -10,36 +10,27 @@ public class DataGenerator(string locale)
         .StrictMode(false)
         .Rules((f, u) =>
         {
-            u.Number = f.IndexGlobal + 1;
             u.Id = f.Database.Random.Uuid().ToString();
-            u.Gender = f.Person.Gender.ToString();
-            u.FirstName = f.Name.FirstName();
-            u.LastName = f.Name.LastName();
-            u.MiddleName = f.Name.FirstName(f.Person.Gender).OrNull(f, .2f);
-            u.Email = f.Internet.Email(u.FirstName, u.LastName);
             u.Phone = f.Phone.PhoneNumber();
-            u.StreetAddress = f.Person.Address.Street;
-            u.City = f.Person.Address.City;
-            u.State = f.Person.Address.State;
-            u.ZipCode = f.Person.Address.ZipCode;
-            u.Suite = f.Person.Address.Suite;
-            u.Name = CombineName(u.FirstName, u.MiddleName, u.LastName);
-            u.Address = ShuffleAddress(u.Name, u.City, u.Email, u.Phone,
-            u.StreetAddress, u.Suite, u.ZipCode, u.State);
+            u.Name = CombineName(f.Name.FirstName(),
+                f.Name.FirstName(f.Person.Gender).OrNull(f, .2f),
+                f.Name.LastName());
+            u.Address = ShuffleAddress(u.Name,
+                f.Person.Address.City, u.Phone,
+            f.Person.Address.Street, f.Person.Address.Suite,
+            f.Person.Address.ZipCode, f.Person.Address.State);
         });
 
-    private readonly Faker<LocalizedLetters> lettersFaker =
-        new Faker<LocalizedLetters>(locale)
+    private readonly Faker<LocalizedAlfanumeric> lettersFaker =
+        new Faker<LocalizedAlfanumeric>(locale)
         .StrictMode(false)
         .Rules((f, u) =>
         {
-            u.Letters = f.Person.FirstName;
-            u.Digits = f.Finance.Account();
-            u.AlfaNumericSet = CombineAlfanumeric(u.Letters, u.Digits);
-        }
-            );
+            u.AlfaNumericSet = CombineAlfanumeric(f.Person.FullName,
+                f.Finance.Account());
+        });
 
-    public LocalizedLetters GenerateLetters(int seed)
+    public LocalizedAlfanumeric GenerateLetters(int seed)
     {
         return lettersFaker.UseSeed(seed).Generate();
     }
@@ -57,34 +48,56 @@ public class DataGenerator(string locale)
     }
 
     private static string ShuffleAddress(
-        string name, string city, string email, string phone,
+        string name, string city, string phone,
         string streetAddress, string suite, string zipCode, string state)
     {
         StringBuilder sb = new();
-        if (email.Length > name.Length)
+        if (suite.Length + zipCode.Length > name.Length)
         {
-            sb.Append(suite).Append(streetAddress).Append(city)
-                .Append(zipCode).Append(state).Append(' ');
+            CreateFirstAddress(city, streetAddress, suite, zipCode, state, sb);
             return sb.ToString();
         }
 
-        if (phone.Length > email.Length)
+        if (phone.Length > city.Length + suite.Length)
         {
-            sb.Append(zipCode).Append(city).Append(state)
-                .Append(suite).Append(streetAddress).Append(' ');
+            CreateSecondAddress(city, streetAddress, suite, zipCode, state, sb);
             return sb.ToString();
         }
 
-        sb.Append(state).Append(city).Append(streetAddress)
-            .Append(suite).Append(zipCode).Append(' ');
+        CreateDefaultAddress(city, streetAddress, suite, zipCode, state, sb);
         return sb.ToString();
+    }
+
+    private static void CreateDefaultAddress(string city, string streetAddress,
+        string suite, string zipCode, string state, StringBuilder sb)
+    {
+        sb.Append(state).Append(' ').Append(city).Append(' ')
+            .Append(streetAddress).Append(' ').Append(suite).Append(' ')
+            .Append(zipCode).Append(' ');
+    }
+
+    private static void CreateSecondAddress(string city, string streetAddress,
+        string suite, string zipCode, string state, StringBuilder sb)
+    {
+        sb.Append(zipCode).Append(' ').Append(city).Append(' ')
+            .Append(state).Append(' ').Append(suite).Append(' ')
+            .Append(streetAddress).Append(' ');
+    }
+
+    private static void CreateFirstAddress(string city, string streetAddress,
+        string suite, string zipCode, string state, StringBuilder sb)
+    {
+        sb.Append(suite).Append(' ').Append(streetAddress)
+            .Append(' ').Append(city).Append(' ').Append(zipCode)
+            .Append(' ').Append(state).Append(' ');
     }
 
     private static string CombineName(string firstName,
         string MiddleName, string LastName)
     {
         StringBuilder sb = new();
-        sb.Append(firstName).Append(MiddleName).Append(LastName);
+        sb.Append(firstName).Append(' ').Append(MiddleName)
+            .Append(' ').Append(LastName);
         return sb.ToString();
     }
 }
