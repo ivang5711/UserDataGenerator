@@ -8,6 +8,8 @@ In addition to that user can download result stored in .csv file.
 
 The app is build with Blazor and uses WebAssembly to run the data generation.
 
+App uses Bogus library to generate fake data.
+
 The data generates in deterministic manner. Combination of seed, region and error count values drives the generator.\
 Therefore as long as the values provided remain the same so does the result.
 
@@ -17,8 +19,8 @@ Therefore as long as the values provided remain the same so does the result.
 ---
 
 >You can play with the deployed test version on:\
-<a href="https://task-5-user-registry.azurewebsites.net/">
-<u><i>task-5-user-registry.azurewebsites.net/</i></u>
+<a href="https://task5-user-registry.azurewebsites.net">
+<u><i>task5-user-registry.azurewebsites.net/</i></u>
 </a>
 
 <img src="img/user-registry.png" alt="main-page" width="540">
@@ -26,9 +28,12 @@ Therefore as long as the values provided remain the same so does the result.
 ---
 
 <details>
-  <summary><i>UI Screenshots</i></summary>
+  <summary><i>Screenshots</i></summary>
 
-<img src="img/registration-homer.png" alt="registration-homer" width="540">
-<img src="img/login.png" alt="login" width="540">
+<img src="img/csv-export.png" alt="csv-export" width="540">
+
+---
+
+<img src="img/large-data.png" alt="large-data" width="540">
 
 </details>
